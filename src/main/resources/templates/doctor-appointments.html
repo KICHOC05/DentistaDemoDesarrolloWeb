@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DentistaDemo - Citas por Doctor</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">DentistaDemo</h1>
+            <p class="subtitle">Buscar Citas por Doctor</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="page-header">
+            <h2>Citas por Doctor</h2>
+            <a th:href="@{/}" class="btn btn-secondary">Volver al Inicio</a>
+        </div>
+
+        <div class="form-card">
+            <form th:action="@{/web/appointments/doctor/results}" method="get" class="form form-inline">
+                <div class="form-group">
+                    <label for="doctorPublicId">Seleccione un Doctor</label>
+                    <select id="doctorPublicId" name="doctorPublicId" class="form-control" required>
+                        <option value="">Seleccione un doctor</option>
+                        <option th:each="doctor : ${doctors}"
+                                th:value="${doctor.publicId}"
+                                th:text="${doctor.fullName} + ' - ' + ${doctor.specialty}"
+                                th:selected="${doctor.publicId == searchedDoctorPublicId}">
+                        </option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Buscar</button>
+            </form>
+        </div>
+
+        <div th:if="${appointments != null and #lists.isEmpty(appointments)}" class="empty-state">
+            <p>No se encontraron citas para este doctor.</p>
+        </div>
+
+        <div th:if="${appointments != null and !#lists.isEmpty(appointments)}" class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Paciente</th>
+                        <th>Doctor</th>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Motivo</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="appointment : ${appointments}">
+                        <td th:text="${appointment.patientName}">Paciente</td>
+                        <td th:text="${appointment.doctorName}">Doctor</td>
+                        <td th:text="${appointment.appointmentDate}">Fecha</td>
+                        <td th:text="${appointment.startTime}">Hora</td>
+                        <td th:text="${appointment.reason}">Motivo</td>
+                        <td>
+                            <span class="status-badge"
+                                  th:classappend="${appointment.statusClass}"
+                                  th:text="${appointment.status}">
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 DentistaDemo - ClinicaDentalSaaS. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+</body>
+</html>

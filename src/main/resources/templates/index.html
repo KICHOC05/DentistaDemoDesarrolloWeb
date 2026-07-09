@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DentistaDemo - Inicio</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">DentistaDemo</h1>
+            <p class="subtitle">Sistema de Gestion de Citas Dentales</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <h2>Bienvenido al Sistema de Citas</h2>
+            <p>Seleccione una opcion para comenzar</p>
+        </section>
+
+        <section class="cards-grid">
+            <a th:href="@{/web/appointments}" class="card card-primary">
+                <div class="card-icon">📅</div>
+                <h3>Ver Citas</h3>
+                <p>Listado completo de todas las citas registradas</p>
+            </a>
+
+            <a th:href="@{/web/appointments/new}" class="card card-success">
+                <div class="card-icon">➕</div>
+                <h3>Nueva Cita</h3>
+                <p>Registrar una nueva cita dental</p>
+            </a>
+
+            <a th:href="@{/web/appointments/doctor}" class="card card-info">
+                <div class="card-icon">👨‍⚕️</div>
+                <h3>Citas por Doctor</h3>
+                <p>Buscar citas por doctor</p>
+            </a>
+
+            <a th:href="@{/web/appointments/patient}" class="card card-warning">
+                <div class="card-icon">🧑‍🤝‍🧑</div>
+                <h3>Citas por Paciente</h3>
+                <p>Buscar citas por paciente</p>
+            </a>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 DentistaDemo - ClinicaDentalSaaS. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+</body>
+</html>
