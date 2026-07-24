@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinica Dental SaaS</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">DentistaDemo</h1>
+            <p class="subtitle">Clinica Dental SaaS</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="hero">
+            <h2>Bienvenido a DentistaDemo</h2>
+            <p>Sistema de Gestion Dental</p>
+        </div>
+        <div class="cards-grid">
+            <a th:href="@{/web/login}" class="card card-primary">
+                <div class="card-icon">🔐</div>
+                <h3>Iniciar Sesion</h3>
+                <p>Acceda al sistema con sus credenciales</p>
+            </a>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 DentistaDemo - ClinicaDentalSaaS</p>
+        </div>
+    </footer>
+</body>
+</html>
