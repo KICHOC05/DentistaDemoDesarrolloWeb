@@ -1,0 +1,99 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
+      MYSQL_DATABASE: ${DB_NAME}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dental-net
+
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: ../Dockerfile.auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/${DB_NAME}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      DB_USER: root
+      DB_PASS: ${DB_ROOT_PASS}
+      JWT_SECRET: ${JWT_SECRET}
+      SERVER_PORT: 8081
+      APPOINTMENT_SERVICE_URL: http://appointment-service:8082
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - dental-net
+
+  appointment-service:
+    build:
+      context: ./appointment-service
+      dockerfile: ../Dockerfile.appointment-service
+    ports:
+      - "8082:8082"
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/${DB_NAME}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      DB_USER: root
+      DB_PASS: ${DB_ROOT_PASS}
+      JWT_SECRET: ${JWT_SECRET}
+      SERVER_PORT: 8082
+      AUTH_SERVICE_URL: http://auth-service:8081
+      CLINICAL_SERVICE_URL: http://clinical-service:8083
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - dental-net
+
+  clinical-service:
+    build:
+      context: ./clinical-service
+      dockerfile: ../Dockerfile.clinical-service
+    ports:
+      - "8083:8083"
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/${DB_NAME}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      DB_USER: root
+      DB_PASS: ${DB_ROOT_PASS}
+      JWT_SECRET: ${JWT_SECRET}
+      SERVER_PORT: 8083
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - dental-net
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: ../Dockerfile.api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      AUTH_SERVICE_URL: http://auth-service:8081
+      APPOINTMENT_SERVICE_URL: http://appointment-service:8082
+      CLINICAL_SERVICE_URL: http://clinical-service:8083
+    depends_on:
+      - auth-service
+      - appointment-service
+      - clinical-service
+    networks:
+      - dental-net
+
+volumes:
+  mysql_data:
+
+networks:
+  dental-net:
+    driver: bridge

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DentistaDemo - Usuarios</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">DentistaDemo</h1>
+            <p class="subtitle">Gestion de Usuarios</p>
+            <div class="user-info">
+                <span th:text="${session.userFullName}">Usuario</span>
+                <a th:href="@{/web/logout}" class="btn btn-sm btn-secondary">Cerrar Sesion</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="page-header">
+            <h2>Usuarios del Sistema</h2>
+            <a th:href="@{/web/dashboard}" class="btn btn-secondary">Volver al Dashboard</a>
+        </div>
+
+        <div class="form-card">
+            <h3>Crear Nuevo Usuario</h3>
+            <form th:action="@{/web/users}" th:object="${registerRequest}" method="post" class="form">
+                <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="username">Usuario</label>
+                        <input type="text" id="username" th:field="*{username}" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" th:field="*{email}" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="password">Contrasena</label>
+                        <input type="password" id="password" th:field="*{password}" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="fullName">Nombre Completo</label>
+                        <input type="text" id="fullName" th:field="*{fullName}" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="role">Rol</label>
+                    <select id="role" th:field="*{role}" class="form-control" required onchange="toggleRoleFields()">
+                        <option value="">Seleccione un rol</option>
+                        <option value="ADMIN">Administrador</option>
+                        <option value="RECEPTIONIST">Recepcionista</option>
+                        <option value="DOCTOR">Doctor</option>
+                        <option value="PATIENT">Paciente</option>
+                    </select>
+                </div>
+                <div class="form-group" id="specialtyGroup" style="display:none;">
+                    <label for="specialty">Especialidad (para el registro de Doctor)</label>
+                    <input type="text" id="specialty" th:field="*{specialty}" class="form-control" placeholder="Ej. Ortodoncia">
+                </div>
+                <div class="form-group" id="phoneGroup" style="display:none;">
+                    <label for="phone">Telefono (para el registro de Paciente)</label>
+                    <input type="text" id="phone" th:field="*{phone}" class="form-control" placeholder="Ej. 5512345678">
+                </div>
+                <p class="form-hint" style="font-size:0.85em;color:#666;">
+                    Si el rol es Doctor o Paciente, se creara automaticamente su registro
+                    correspondiente en el modulo de Citas, ya enlazado a este usuario.
+                </p>
+                <button type="submit" class="btn btn-success">Crear Usuario</button>
+            </form>
+        </div>
+
+        <script th:inline="javascript">
+            function toggleRoleFields() {
+                var role = document.getElementById('role').value;
+                document.getElementById('specialtyGroup').style.display = (role === 'DOCTOR') ? 'block' : 'none';
+                document.getElementById('phoneGroup').style.display = (role === 'PATIENT') ? 'block' : 'none';
+            }
+            document.addEventListener('DOMContentLoaded', toggleRoleFields);
+        </script>
+
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Roles</th>
+                        <th>Estado</th>
+                        <th>Creado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="user : ${users}">
+                        <td th:text="${user.username}">user</td>
+                        <td th:text="${user.fullName}">Nombre</td>
+                        <td th:text="${user.email}">email</td>
+                        <td>
+                            <span th:each="role : ${user.roles}" class="badge" th:text="${role}"></span>
+                        </td>
+                        <td>
+                            <span class="status-badge" th:classappend="${user.enabled} ? 'status-confirmed' : 'status-cancelled'"
+                                  th:text="${user.enabled} ? 'Activo' : 'Inactivo'"></span>
+                        </td>
+                        <td th:text="${user.createdAt.toLocalDate()}">fecha</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 DentistaDemo - ClinicaDentalSaaS</p>
+        </div>
+    </footer>
+</body>
+</html>

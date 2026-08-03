@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="token" th:content="${token}">
+    <title>DentistaDemo - Citas</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">DentistaDemo</h1>
+            <p class="subtitle">Gestion de Citas Dentales</p>
+            <div class="user-info">
+                <a th:href="${gatewayUrl} + '/web/dashboard'" class="btn btn-sm btn-secondary">Dashboard</a>
+                <a th:href="${gatewayUrl} + '/web/logout'" class="btn btn-sm btn-secondary">Cerrar Sesion</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="page-header">
+            <h2>Todas las Citas</h2>
+            <div class="header-actions">
+                <a th:href="@{/web/appointments/new}" class="btn btn-success" th:if="${#lists.contains(userRoles, 'ROLE_ADMIN') or #lists.contains(userRoles, 'ROLE_RECEPTIONIST')}">Nueva Cita</a>
+                <a th:href="${gatewayUrl} + '/web/dashboard'" class="btn btn-secondary">Volver al Inicio</a>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(appointments)}" class="empty-state">
+            <p>No hay citas registradas.</p>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(appointments)}" class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Paciente</th>
+                        <th>Doctor</th>
+                        <th>Fecha</th>
+                        <th>Horario</th>
+                        <th>Motivo</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="appointment : ${appointments}">
+                        <td th:text="${appointment.patientName}">Paciente</td>
+                        <td th:text="${appointment.doctorName}">Doctor</td>
+                        <td th:text="${appointment.appointmentDate}">Fecha</td>
+                        <td th:text="${appointment.startTime} + ' - ' + ${appointment.endTime}">Horario</td>
+                        <td th:text="${appointment.reason}">Motivo</td>
+                        <td>
+                            <span class="status-badge" th:classappend="${appointment.statusClass}" th:text="${appointment.status}">
+                            </span>
+                        </td>
+                        <td class="actions-cell">
+                            <button th:if="${appointment.status == 'PENDING'}"
+                                    class="btn btn-sm btn-confirm"
+                                    th:attr="data-public-id=${appointment.publicId}"
+                                    onclick="confirmAppointment(this.getAttribute('data-public-id'))">
+                                Confirmar
+                            </button>
+                            <button th:if="${appointment.status != 'COMPLETED'}"
+                                    class="btn btn-sm btn-cancel"
+                                    th:attr="data-public-id=${appointment.publicId}"
+                                    onclick="cancelAppointment(this.getAttribute('data-public-id'))">
+                                Cancelar
+                            </button>
+                            <button th:if="${appointment.status == 'PENDING' or appointment.status == 'CONFIRMED'}"
+                                    class="btn btn-sm btn-complete"
+                                    th:attr="data-public-id=${appointment.publicId}"
+                                    onclick="completeAppointment(this.getAttribute('data-public-id'))">
+                                Completar
+                            </button>
+                            <button th:if="${appointment.status == 'PENDING' or appointment.status == 'CONFIRMED'}"
+                                    class="btn btn-sm btn-info"
+                                    th:attr="data-public-id=${appointment.publicId}"
+                                    onclick="rescheduleAppointment(this.getAttribute('data-public-id'))">
+                                Reagendar
+                            </button>
+                            <span th:if="${appointment.status == 'COMPLETED' or appointment.status == 'CANCELLED'}"
+                                  class="no-action">&mdash;</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:if="${totalPages > 1}" class="pagination">
+            <span th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                <a th:href="@{/web/appointments(page=${i})}"
+                   th:classappend="${i == currentPage} ? 'pagination-active' : ''"
+                   th:text="${i + 1}" class="btn btn-sm btn-secondary">1</a>
+            </span>
+            <span class="pagination-info" th:text="'Pagina ' + (${currentPage} + 1) + ' de ' + ${totalPages}"></span>
+        </div>
+    </main>
+
+    <div id="rescheduleModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeRescheduleModal()">&times;</span>
+            <h3>Reagendar Cita</h3>
+            <div class="form">
+                <div class="form-group">
+                    <label for="rescheduleDate">Nueva Fecha</label>
+                    <input type="date" id="rescheduleDate" class="form-control" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="rescheduleStartTime">Hora de Inicio</label>
+                        <input type="time" id="rescheduleStartTime" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="rescheduleEndTime">Hora de Fin</label>
+                        <input type="time" id="rescheduleEndTime" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button onclick="submitReschedule()" class="btn btn-success">Guardar</button>
+                    <button onclick="closeRescheduleModal()" class="btn btn-secondary">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 DentistaDemo - ClinicaDentalSaaS. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script th:src="@{/js/appointments.js}"></script>
+</body>
+</html>

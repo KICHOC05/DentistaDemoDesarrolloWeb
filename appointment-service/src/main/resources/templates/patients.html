@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="token" th:content="${token}">
+    <title>Pacientes</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">DentistaDemo</h1>
+            <p class="subtitle">Gestion de Pacientes</p>
+            <div>
+                <a th:href="${gatewayUrl} + '/web/dashboard'" class="btn btn-sm btn-secondary">Dashboard</a>
+                <a th:href="${gatewayUrl} + '/web/logout'" class="btn btn-sm btn-secondary">Cerrar Sesion</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="page-header">
+            <h2>Pacientes</h2>
+            <div class="header-actions">
+                <a th:href="@{/web/patients/new}" class="btn btn-success" th:if="${#lists.contains(userRoles, 'ROLE_ADMIN') or #lists.contains(userRoles, 'ROLE_RECEPTIONIST')}">Nuevo Paciente</a>
+                <a th:href="${gatewayUrl} + '/web/dashboard'" class="btn btn-secondary">Volver al Inicio</a>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <form method="get" th:action="@{/web/patients}" class="form-inline">
+                <div class="form-group">
+                    <input type="text" name="q" th:value="${q}" class="form-control" placeholder="Buscar por nombre...">
+                </div>
+                <button type="submit" class="btn btn-primary">Buscar</button>
+            </form>
+        </div>
+
+        <div th:if="${#lists.isEmpty(patients)}" class="empty-state">
+            <p>No se encontraron pacientes.</p>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(patients)}" class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Telefono</th>
+                        <th>Usuario vinculado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="patient : ${patients}">
+                        <td th:text="${patient.fullName}">Nombre</td>
+                        <td th:text="${patient.email}">Email</td>
+                        <td th:text="${patient.phone}">Telefono</td>
+                        <td>
+                            <span th:if="${patient.userPublicId != null}" style="color: green;">Si</span>
+                            <span th:unless="${patient.userPublicId != null}" style="color: #b00;">No</span>
+                        </td>
+                        <td>
+                            <a th:href="@{/web/patients/{id}/edit(id=${patient.publicId})}" class="btn btn-sm btn-primary"
+                               th:if="${#lists.contains(userRoles, 'ROLE_ADMIN') or #lists.contains(userRoles, 'ROLE_RECEPTIONIST')}">Editar</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 DentistaDemo - ClinicaDentalSaaS</p>
+        </div>
+    </footer>
+</body>
+</html>

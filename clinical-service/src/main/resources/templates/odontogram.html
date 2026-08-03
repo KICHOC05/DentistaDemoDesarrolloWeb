@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="token" th:content="${token}">
+    <title>DentistaDemo - Odontograma</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <style>
+        .odontogram-container { background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin: 1rem 0; }
+        .jaw-section { margin-bottom: 2rem; }
+        .jaw-section h3 { text-align: center; color: #666; margin-bottom: 0.5rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; }
+        .teeth-grid { display: flex; justify-content: center; gap: 4px; flex-wrap: wrap; }
+        .tooth-wrapper { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+        .tooth { width: 48px; height: 56px; border: 2px solid #ccc; border-radius: 8px 8px 12px 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; color: #333; transition: all 0.2s; position: relative; }
+        .tooth:hover { transform: scale(1.1); box-shadow: 0 2px 12px rgba(0,0,0,0.15); z-index: 2; }
+        .tooth.selected { box-shadow: 0 0 0 3px #1a73e8; transform: scale(1.05); }
+        .tooth.upper { border-radius: 12px 12px 6px 6px; }
+        .tooth.lower { border-radius: 6px 6px 12px 12px; }
+        .tooth-label { font-size: 0.65rem; color: #999; margin-top: 2px; }
+        .tooth-notes { font-size: 0.6rem; color: #666; max-width: 50px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .condition-sano { background: #d4edda; border-color: #28a745; color: #155724; }
+        .condition-cariado { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+        .condition-obturado { background: #fff3cd; border-color: #ffc107; color: #856404; }
+        .condition-endodonciado { background: #cce5ff; border-color: #17a2b8; color: #004085; }
+        .condition-ausente { background: #e2e3e5; border-color: #6c757d; color: #383d41; opacity: 0.6; }
+        .condition-protesis { background: #e8daef; border-color: #6f42c1; color: #4a235a; }
+        .condition-corona { background: #d5f5e3; border-color: #1abc9c; color: #0e6251; }
+        .condition-fracturado { background: #fadbd8; border-color: #e74c3c; color: #922b21; }
+        .condition-sealant { background: #d6eaf8; border-color: #3498db; color: #1a5276; }
+        .condition-implante { background: #f5eef8; border-color: #8e44ad; color: #512e5f; }
+        .condition-puente { background: #fdebd0; border-color: #e67e22; color: #935116; }
+        .midline { width: 20px; flex-shrink: 0; }
+        .tooth-selector { display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; justify-content: center; }
+        .tooth-selector button { padding: 0.4rem 0.8rem; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.2s; }
+        .tooth-selector button:hover { transform: translateY(-2px); }
+        .tooth-selector button.active { border-color: #1a73e8; background: #1a73e8; color: white; }
+        .jaw-divider { text-align: center; margin: 0.5rem 0; color: #ccc; font-size: 1.5rem; }
+        .tooth-info-panel { background: #f8f9fa; border-radius: 12px; padding: 1.5rem; margin-top: 1rem; display: none; }
+        .tooth-info-panel.visible { display: block; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">DentistaDemo</h1>
+            <p class="subtitle">Odontograma</p>
+            <div class="user-info">
+                <a th:href="${gatewayUrl} + '/web/dashboard'" class="btn btn-sm btn-secondary">Dashboard</a>
+                <a th:href="${gatewayUrl} + '/web/logout'" class="btn btn-sm btn-secondary">Cerrar Sesion</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="page-header">
+            <h2>Odontograma - Paciente: <span th:text="${patientPublicId}">ID</span></h2>
+            <div class="header-actions">
+                <a th:href="@{/web/clinical/{id}(id=${patientPublicId})}" class="btn btn-secondary">Volver al Historial</a>
+            </div>
+        </div>
+
+        <div class="odontogram-container">
+            <!-- Upper Jaw -->
+            <div class="jaw-section">
+                <h3>Arco Superior</h3>
+                <div class="teeth-grid">
+                    <div th:each="num : ${upperRight}" class="tooth-wrapper">
+                        <div class="tooth upper"
+                             th:classappend="${toothMap.containsKey(num)} ? 'condition-' + ${toothMap.get(num)?.toLowerCase()} : 'condition-sano'"
+                             th:attr="data-tooth=${num}"
+                             onclick="selectTooth(this, ${num})">
+                            <span th:text="${num}">11</span>
+                        </div>
+                        <span class="tooth-label" th:text="${num}">11</span>
+                    </div>
+                    <div class="midline"></div>
+                    <div th:each="num : ${upperLeft}" class="tooth-wrapper">
+                        <div class="tooth upper"
+                             th:classappend="${toothMap.containsKey(num)} ? 'condition-' + ${toothMap.get(num)?.toLowerCase()} : 'condition-sano'"
+                             th:attr="data-tooth=${num}"
+                             onclick="selectTooth(this, ${num})">
+                            <span th:text="${num}">21</span>
+                        </div>
+                        <span class="tooth-label" th:text="${num}">21</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="jaw-divider">━━━  Oclusión  ━━━</div>
+
+            <!-- Lower Jaw -->
+            <div class="jaw-section">
+                <h3>Arco Inferior</h3>
+                <div class="teeth-grid">
+                    <div th:each="num : ${lowerLeft}" class="tooth-wrapper">
+                        <div class="tooth lower"
+                             th:classappend="${toothMap.containsKey(num)} ? 'condition-' + ${toothMap.get(num)?.toLowerCase()} : 'condition-sano'"
+                             th:attr="data-tooth=${num}"
+                             onclick="selectTooth(this, ${num})">
+                            <span th:text="${num}">31</span>
+                        </div>
+                        <span class="tooth-label" th:text="${num}">31</span>
+                    </div>
+                    <div class="midline"></div>
+                    <div th:each="num : ${lowerRight}" class="tooth-wrapper">
+                        <div class="tooth lower"
+                             th:classappend="${toothMap.containsKey(num)} ? 'condition-' + ${toothMap.get(num)?.toLowerCase()} : 'condition-sano'"
+                             th:attr="data-tooth=${num}"
+                             onclick="selectTooth(this, ${num})">
+                            <span th:text="${num}">41</span>
+                        </div>
+                        <span class="tooth-label" th:text="${num}">41</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Condition Legend -->
+            <div class="tooth-selector" id="conditionSelector">
+                <button th:each="cond : ${conditions}"
+                        th:classappend="'condition-' + ${cond.toLowerCase()}"
+                        th:attr="data-condition=${cond}"
+                        th:text="${cond}"
+                        onclick="setCondition(this.getAttribute('data-condition'))">
+                </button>
+            </div>
+
+            <!-- Tooth Info Panel -->
+            <div id="toothInfoPanel" class="tooth-info-panel">
+                <h4>Diente <span id="selectedToothNum">-</span></h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Condicion Actual: <span id="currentCondition">SANO</span></label>
+                    </div>
+                    <div class="form-group">
+                        <label>Notas</label>
+                        <input type="text" id="toothNotes" class="form-control" placeholder="Notas para este diente">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="saveToothCondition()">Guardar</button>
+            </div>
+
+            <div id="saveMessage" style="margin-top:0.5rem; text-align:center;"></div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 DentistaDemo - ClinicaDentalSaaS</p>
+        </div>
+    </footer>
+
+    <script th:inline="javascript">
+        var currentTooth = null;
+        var currentCondition = 'SANO';
+        var baseApiUrl = '/api/clinical';
+        var patientId = [[${patientPublicId}]];
+
+        function selectTooth(el, toothNumber) {
+            document.querySelectorAll('.tooth.selected').forEach(function(t) {
+                t.classList.remove('selected');
+            });
+            el.classList.add('selected');
+            currentTooth = toothNumber;
+
+            var condClass = '';
+            el.className.split(' ').forEach(function(c) {
+                if (c.startsWith('condition-')) condClass = c.replace('condition-', '');
+            });
+
+            document.getElementById('selectedToothNum').textContent = toothNumber;
+            document.getElementById('currentCondition').textContent = condClass ? condClass.toUpperCase() : 'SANO';
+            document.getElementById('toothNotes').value = '';
+            document.getElementById('toothInfoPanel').classList.add('visible');
+            currentCondition = condClass ? condClass.toUpperCase() : 'SANO';
+        }
+
+        function setCondition(condition) {
+            currentCondition = condition;
+            document.querySelectorAll('.tooth-selector button').forEach(function(b) {
+                b.classList.remove('active');
+            });
+            document.querySelectorAll('.tooth-selector button').forEach(function(b) {
+                if (b.getAttribute('data-condition') === condition) {
+                    b.classList.add('active');
+                }
+            });
+            document.getElementById('currentCondition').textContent = condition;
+        }
+
+        function saveToothCondition() {
+            if (!currentTooth) { alert('Seleccione un diente primero.'); return; }
+
+            var token = document.querySelector('meta[name="token"]').getAttribute('content');
+            var notes = document.getElementById('toothNotes').value;
+
+            fetch(baseApiUrl + '/odontogram', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? 'Bearer ' + token : ''
+                },
+                body: JSON.stringify({
+                    patientPublicId: patientId,
+                    toothNumber: currentTooth,
+                    condition: currentCondition,
+                    notes: notes
+                })
+            })
+            .then(function(r) { if (!r.ok) throw new Error('Error al guardar'); return r.json(); })
+            .then(function() {
+                var msg = document.getElementById('saveMessage');
+                msg.innerHTML = '<span style="color:#28a745;">Diente ' + currentTooth + ' actualizado a ' + currentCondition + '</span>';
+                setTimeout(function() { msg.innerHTML = ''; }, 3000);
+
+                document.querySelectorAll('.tooth').forEach(function(t) {
+                    if (parseInt(t.getAttribute('data-tooth')) === currentTooth) {
+                        var prefix = 'condition-';
+                        t.className.split(' ').forEach(function(c) {
+                            if (c.startsWith(prefix)) t.classList.remove(c);
+                        });
+                        t.classList.add('condition-' + currentCondition.toLowerCase());
+                    }
+                });
+            })
+            .catch(function(err) {
+                document.getElementById('saveMessage').innerHTML =
+                    '<span style="color:#dc3545;">Error: ' + err.message + '</span>';
+            });
+        }
+    </script>
+</body>
+</html>

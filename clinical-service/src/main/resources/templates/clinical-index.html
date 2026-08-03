@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="token" th:content="${token}">
+    <title>DentistaDemo - Expediente Clinico</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">DentistaDemo</h1>
+            <p class="subtitle">Expediente Clinico Dental</p>
+            <div class="user-info">
+                <a th:href="${gatewayUrl} + '/web/dashboard'" class="btn btn-sm btn-secondary">Dashboard</a>
+                <a th:href="${gatewayUrl} + '/web/logout'" class="btn btn-sm btn-secondary">Cerrar Sesion</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="page-header">
+            <h2>Buscar Paciente</h2>
+        </div>
+
+        <div class="form-card">
+            <form th:action="@{/web/clinical/search}" method="get" class="form form-inline">
+                <div class="form-group">
+                    <label for="q">Buscar por nombre del paciente</label>
+                    <input type="text" id="q" name="q" class="form-control"
+                           placeholder="Escriba el nombre del paciente..." th:value="${q}" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Buscar</button>
+            </form>
+        </div>
+
+        <div class="form-card">
+            <h3>Seleccionar paciente</h3>
+            <form th:action="@{/web/clinical/search}" method="get" class="form form-inline">
+                <div class="form-group">
+                    <label for="patientSelect">Paciente</label>
+                    <select id="patientSelect" name="q" class="form-control" th:attr="data-base-href=@{/web/clinical/}" onchange="if(this.value) window.location.href=this.getAttribute('data-base-href') + this.value;">
+                        <option value="">Seleccione un paciente...</option>
+                        <option th:each="p : ${patients}"
+                                th:value="${p.publicId}"
+                                th:text="${p.fullName} + ' (' + ${p.email} + ')'">
+                        </option>
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <div th:if="${q != null and #lists.isEmpty(patients)}" class="empty-state">
+            <p>No se encontraron pacientes con el nombre "<span th:text="${q}">nombre</span>".</p>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 DentistaDemo - ClinicaDentalSaaS</p>
+        </div>
+    </footer>
+</body>
+</html>

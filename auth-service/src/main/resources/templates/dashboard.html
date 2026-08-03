@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DentistaDemo - Dashboard</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">DentistaDemo</h1>
+            <p class="subtitle">Panel Principal</p>
+            <div class="user-info">
+                <span th:text="${userFullName}">Usuario</span>
+                <a th:href="@{/web/logout}" class="btn btn-sm btn-secondary">Cerrar Sesion</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <h2>Bienvenido, <span th:text="${userFullName}">Usuario</span></h2>
+            <p>Seleccione una opcion para continuar</p>
+        </section>
+
+        <section class="cards-grid">
+            <div th:if="${userRoles.contains('ADMIN') or userRoles.contains('RECEPTIONIST')}" class="card card-primary">
+                <a th:href="@{/web/users}" class="card-link">
+                    <div class="card-icon">👥</div>
+                    <h3>Usuarios</h3>
+                    <p>Gestion de usuarios del sistema</p>
+                </a>
+            </div>
+
+            <div th:if="${userRoles.contains('ADMIN') or userRoles.contains('RECEPTIONIST') or userRoles.contains('DOCTOR')}" class="card card-warning">
+                <a th:href="${gatewayUrl} + '/web/patients'" class="card-link">
+                    <div class="card-icon">👤</div>
+                    <h3>Pacientes</h3>
+                    <p>Gestion de pacientes</p>
+                </a>
+            </div>
+
+            <div th:if="${userRoles.contains('ADMIN') or userRoles.contains('RECEPTIONIST') or userRoles.contains('DOCTOR')}" class="card card-secondary">
+                <a th:href="${gatewayUrl} + '/web/doctors'" class="card-link">
+                    <div class="card-icon">🩺</div>
+                    <h3>Doctores</h3>
+                    <p>Gestion de doctores</p>
+                </a>
+            </div>
+
+            <div th:if="${userRoles.contains('ADMIN') or userRoles.contains('RECEPTIONIST') or userRoles.contains('DOCTOR')}" class="card card-success">
+                <a th:href="${gatewayUrl} + '/web/appointments'" class="card-link">
+                    <div class="card-icon">📅</div>
+                    <h3>Citas</h3>
+                    <p>Gestion de citas dentales</p>
+                </a>
+            </div>
+
+            <div th:if="${userRoles.contains('ADMIN') or userRoles.contains('RECEPTIONIST') or userRoles.contains('DOCTOR')}" class="card card-info">
+                <a th:href="${gatewayUrl} + '/web/clinical'" class="card-link">
+                    <div class="card-icon">📋</div>
+                    <h3>Expediente Clinico</h3>
+                    <p>Historial medico y odontograma</p>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 DentistaDemo - ClinicaDentalSaaS</p>
+        </div>
+    </footer>
+</body>
+</html>

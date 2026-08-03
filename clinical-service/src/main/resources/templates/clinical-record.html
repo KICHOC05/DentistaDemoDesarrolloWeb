@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="token" th:content="${token}">
+    <title>DentistaDemo - Historial Clinico</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">DentistaDemo</h1>
+            <p class="subtitle">Historial Clinico</p>
+            <div class="user-info">
+                <a th:href="${gatewayUrl} + '/web/dashboard'" class="btn btn-sm btn-secondary">Dashboard</a>
+                <a th:href="${gatewayUrl} + '/web/logout'" class="btn btn-sm btn-secondary">Cerrar Sesion</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="page-header">
+            <h2>Paciente: <span th:text="${patient != null ? patient.fullName : patientPublicId}">Nombre</span></h2>
+            <div class="header-actions">
+                <a th:href="@{/web/clinical/{id}/odontogram(id=${patientPublicId})}" class="btn btn-info">Odontograma</a>
+                <a th:href="@{/web/clinical}" class="btn btn-secondary">Buscar otro</a>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <h3>Datos Medicos</h3>
+            <form th:action="@{/web/clinical/{id}/record(id=${patientPublicId})}" method="post" class="form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tipo de Sangre</label>
+                        <input type="text" name="bloodType" class="form-control"
+                               th:value="${record?.bloodType}" placeholder="Ej: O+">
+                    </div>
+                    <div class="form-group">
+                        <label>Alergias</label>
+                        <input type="text" name="allergies" class="form-control"
+                               th:value="${record?.allergies}" placeholder="Alergias conocidas">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Condiciones Cronicas</label>
+                    <textarea name="chronicConditions" class="form-control" rows="2"
+                              placeholder="Diabetes, hipertension, etc." th:text="${record?.chronicConditions}"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Notas Medicas</label>
+                    <textarea name="medicalNotes" class="form-control" rows="3"
+                              placeholder="Notas adicionales" th:text="${record?.medicalNotes}"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success">Guardar Datos Medicos</button>
+            </form>
+        </div>
+
+        <div class="form-card">
+            <h3>Agregar Diagnostico</h3>
+            <form th:action="@{/web/clinical/{id}/diagnoses(id=${patientPublicId})}" th:object="${diagnosisRequest}" method="post" class="form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Codigo (CIE-10)</label>
+                        <input type="text" th:field="*{diagnosisCode}" class="form-control" placeholder="Ej: K02.9">
+                    </div>
+                    <div class="form-group">
+                        <label>Diagnosticado por</label>
+                        <input type="text" th:field="*{diagnosedBy}" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Descripcion</label>
+                    <textarea th:field="*{description}" class="form-control" rows="2" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Agregar Diagnostico</button>
+            </form>
+        </div>
+
+        <div class="form-card">
+            <h3>Agregar Tratamiento</h3>
+            <form th:action="@{/web/clinical/{id}/treatments(id=${patientPublicId})}" th:object="${treatmentRequest}" method="post" class="form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Diente #</label>
+                        <input type="number" th:field="*{toothNumber}" class="form-control" placeholder="11-48" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo</label>
+                        <select th:field="*{treatmentType}" class="form-control" required>
+                            <option value="">Seleccione</option>
+                            <option value="OBTURACION">Obturacion</option>
+                            <option value="ENDODONCIA">Endodoncia</option>
+                            <option value="EXTRACCION">Extraccion</option>
+                            <option value="LIMPIEZA">Limpieza</option>
+                            <option value="CORONA">Corona</option>
+                            <option value="PROTESIS">Protesis</option>
+                            <option value="IMPLANTE">Implante</option>
+                            <option value="ORTODONCIA">Ortodoncia</option>
+                            <option value="BLANQUEAMIENTO">Blanqueamiento</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Descripcion</label>
+                    <textarea th:field="*{description}" class="form-control" rows="2" required></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Costo</label>
+                        <input type="number" step="0.01" th:field="*{cost}" class="form-control" placeholder="$">
+                    </div>
+                    <div class="form-group">
+                        <label>Notas</label>
+                        <input type="text" th:field="*{notes}" class="form-control" placeholder="Notas del tratamiento">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Agregar Tratamiento</button>
+            </form>
+        </div>
+
+        <div class="table-container" th:if="${not #lists.isEmpty(diagnoses)}">
+            <h3 style="padding:1rem;">Diagnosticos</h3>
+            <table class="table">
+                <thead><tr><th>Codigo</th><th>Descripcion</th><th>Doctor</th><th>Fecha</th></tr></thead>
+                <tbody>
+                    <tr th:each="d : ${diagnoses}">
+                        <td th:text="${d.diagnosisCode}">K02.9</td>
+                        <td th:text="${d.description}">Caries</td>
+                        <td th:text="${d.diagnosedBy}">Dr</td>
+                        <td th:text="${d.diagnosedDate}">fecha</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-container" th:if="${not #lists.isEmpty(treatments)}" style="margin-top:1rem;">
+            <h3 style="padding:1rem;">Tratamientos</h3>
+            <table class="table">
+                <thead><tr><th>Diente</th><th>Tipo</th><th>Descripcion</th><th>Estado</th><th>Costo</th></tr></thead>
+                <tbody>
+                    <tr th:each="t : ${treatments}">
+                        <td th:text="${t.toothNumber}">11</td>
+                        <td th:text="${t.treatmentType}">Obturacion</td>
+                        <td th:text="${t.description}">desc</td>
+                        <td><span class="status-badge" th:text="${t.status}">PENDING</span></td>
+                        <td th:text="${t.cost}">$0</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 DentistaDemo - ClinicaDentalSaaS</p>
+        </div>
+    </footer>
+</body>
+</html>
