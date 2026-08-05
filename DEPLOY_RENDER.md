@@ -8,22 +8,22 @@
                          │   (puerto 8080)│
                          └──────┬───────┘
                                 │
-            ┌───────────────────┼───────────────────┐
-            ▼                   ▼                   ▼
-    ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
-    │ auth-service │   │ appointment  │   │  clinical    │
-    │  (8081)      │   │ -service     │   │ -service     │
-    │              │   │  (8082)      │   │  (8083)      │
-    └──────┬───────┘   └──────┬───────┘   └──────┬───────┘
-           │                  │                  │
-           └──────────────────┼──────────────────┘
-                              ▼
-                     ┌──────────────┐
-                     │    MySQL DB  │
-                     └──────────────┘
+            ┌───────────────────┼───────────────────────────┐
+            ▼                   ▼                   ▼       ▼
+    ┌──────────────┐   ┌──────────────┐   ┌──────────────┐ ┌──────────────┐
+    │ auth-service │   │ appointment  │   │  clinical    │ │  catalog     │
+    │  (8081)      │   │ -service     │   │ -service     │ │ -service     │
+    │              │   │  (8082)      │   │  (8083)      │ │  (8084)      │
+    └──────┬───────┘   └──────┬───────┘   └──────┬───────┘ └──────┬───────┘
+           │                  │                  │                │
+           ▼                  ▼                  ▼                ▼
+    ┌──────────────┐   ┌──────────────┐   ┌──────────────┐ ┌──────────────┐
+    │  MySQL bd1   │   │  MySQL bd2   │   │  MySQL bd3   │ │  MySQL bd4   │
+    │ bgpzojbx...  │   │ byzckqdqz... │   │ bkoffey2x... │ │ b0arfjvp...  │
+    └──────────────┘   └──────────────┘   └──────────────┘ └──────────────┘
 ```
 
-Cada servicio comparte la misma base de datos MySQL y la misma clave JWT secreta.
+**Cada microservicio tiene su propia base de datos MySQL en Clever Cloud.** Todos comparten la misma clave JWT.
 
 ---
 
@@ -31,54 +31,42 @@ Cada servicio comparte la misma base de datos MySQL y la misma clave JWT secreta
 
 - Cuenta en [Render](https://render.com)
 - Repositorio en GitHub conectado a Render
-- Base de datos MySQL externa (ver seccion "Base de Datos" abajo)
+- Bases de datos MySQL en Clever Cloud (ya creadas)
 
 ---
 
-## 1. Base de Datos MySQL
+## Bases de Datos MySQL (Clever Cloud)
 
-Render no ofrece MySQL como servicio gestionado. Usa una de estas alternativas gratuitas:
+Cada servicio se conecta a su propia base de datos. Las URLs JDBC ya estan como valores por defecto en cada `application.properties`.
 
-| Proveedor | URL | Plan Gratuito |
-|-----------|-----|---------------|
-| [Aiven](https://aiven.io) | aiven.io | MySQL 1GB RAM, 5GB disco |
-| [freesqldatabase.com](https://freesqldatabase.com) | freesqldatabase.com | 5MB, 2 conexiones simultaneas |
-| [Railway](https://railway.app) | railway.app | Trial con $5 de credito |
+| Servicio | BD (Clever Cloud) | Host | Usuario |
+|----------|------------------|------|---------|
+| auth-service | `bgpzojbxcg5wuh0dgnzr` | `bgpzojbxcg5wuh0dgnzr-mysql.services.clever-cloud.com` | `utw9dr3fkgw3x5tu` |
+| appointment-service | `byzckqdqz5kfjmu1mlor` | `byzckqdqz5kfjmu1mlor-mysql.services.clever-cloud.com` | `um0aytfzzqye8rbg` |
+| clinical-service | `bkoffey2xrpmnnvsgmyk` | `bkoffey2xrpmnnvsgmyk-mysql.services.clever-cloud.com` | `uw2oz4pvq65rubov` |
+| catalog-service | `b0arfjvp1vhkdjcl6bmq` | `b0arfjvp1vhkdjcl6bmq-mysql.services.clever-cloud.com` | `uhxge6yizzgqi8ov` |
 
-**Crea la base de datos y toma nota de estos valores:**
-```
-DB_HOST=<hostname>
-DB_PORT=3306
-DB_NAME=<nombre_base_datos>
-DB_USER=<usuario>
-DB_PASS=<password>
-```
-
-Construye la URL de conexion JDBC:
-```
-jdbc:mysql://<DB_HOST>:<DB_PORT>/<DB_NAME>?useSSL=true&serverTimezone=UTC&allowPublicKeyRetrieval=true
-```
+Las contraseñas estan configuradas como valores por defecto en los archivos `application.properties`. Para produccion, **configuralas como variables de entorno en Render** para no exponerlas en el codigo.
 
 ---
 
-## 2. Clave JWT Compartida
+## Clave JWT Compartida
 
-Genera una clave secreta de al menos 256 bits (32 caracteres). Puedes usar PowerShell:
+Genera una clave secreta de al menos 256 bits:
 
 ```powershell
-# Generar clave aleatoria de 64 caracteres hex
 $bytes = [byte[]]::new(32)
 [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
 [Convert]::ToBase64String($bytes)
 ```
 
-Guarda este valor como `JWT_SECRET`. **Debe ser el mismo en los 4 servicios.**
+Guarda este valor como `JWT_SECRET`. **Debe ser el mismo en los 5 servicios.**
 
 ---
 
-## 3. Despliegue de los Servicios
+## Despliegue de los Servicios
 
-En Render, crea 4 **Web Services** apuntando al mismo repositorio de GitHub.
+En Render, crea **5 Web Services** apuntando al mismo repositorio de GitHub.
 
 ---
 
@@ -91,23 +79,22 @@ En Render, crea 4 **Web Services** apuntando al mismo repositorio de GitHub.
 | **Branch** | `main` |
 | **Root Directory** | `auth-service` |
 | **Runtime** | `Docker` |
-| **Dockerfile Path** | `Dockerfile.auth-service` |
+| **Dockerfile Path** | `Dockerfile` |
 | **Plan** | `Free` o `Starter` |
 
 **Variables de Entorno:**
 
-| Variable | Valor | Ejemplo |
-|----------|-------|---------|
-| `SERVER_PORT` | `8081` | |
-| `JWT_SECRET` | `<tu_clave_secreta>` | |
-| `DB_URL` | URL JDBC de MySQL | `jdbc:mysql://host:3306/dentaldb?useSSL=true&serverTimezone=UTC` |
-| `DB_USER` | Usuario MySQL | |
-| `DB_PASS` | Password MySQL | |
-| `DB_DRIVER` | `com.mysql.cj.jdbc.Driver` | |
-| `DB_DIALECT` | `org.hibernate.dialect.MySQLDialect` | |
-| `APP_GATEWAY_URL` | URL del gateway (se setea despues) | `https://dental-gateway.onrender.com` |
-
-> **Nota**: `APP_GATEWAY_URL` se puede dejar vacio temporalmente y actualizar despues de crear el gateway.
+| Variable | Valor |
+|----------|-------|
+| `SERVER_PORT` | `8081` |
+| `JWT_SECRET` | `<tu clave secreta>` |
+| `DB_URL` | `jdbc:mysql://bgpzojbxcg5wuh0dgnzr-mysql.services.clever-cloud.com:3306/bgpzojbxcg5wuh0dgnzr?useSSL=true&requireSSL=true&serverTimezone=UTC&allowPublicKeyRetrieval=true` |
+| `DB_USER` | `utw9dr3fkgw3x5tu` |
+| `DB_PASS` | `<password de bd1>` |
+| `DB_DRIVER` | `com.mysql.cj.jdbc.Driver` |
+| `DB_DIALECT` | `org.hibernate.dialect.MySQLDialect` |
+| `APP_GATEWAY_URL` | `https://dental-gateway.onrender.com` |
+| `APPOINTMENT_SERVICE_URL` | `https://dental-appointment-service.onrender.com` |
 
 ---
 
@@ -118,20 +105,24 @@ En Render, crea 4 **Web Services** apuntando al mismo repositorio de GitHub.
 | **Name** | `dental-appointment-service` |
 | **Root Directory** | `appointment-service` |
 | **Runtime** | `Docker` |
-| **Dockerfile Path** | `Dockerfile.appointment-service` |
+| **Dockerfile Path** | `Dockerfile` |
+
+| **Plan** | `Free` o `Starter` |
 
 **Variables de Entorno:**
 
 | Variable | Valor |
 |----------|-------|
 | `SERVER_PORT` | `8082` |
-| `JWT_SECRET` | **(mismo que auth-service)** |
-| `DB_URL` | **(misma URL que auth-service)** |
-| `DB_USER` | **(mismo usuario)** |
-| `DB_PASS` | **(misma password)** |
+| `JWT_SECRET` | `<mismo que auth-service>` |
+| `DB_URL` | `jdbc:mysql://byzckqdqz5kfjmu1mlor-mysql.services.clever-cloud.com:3306/byzckqdqz5kfjmu1mlor?useSSL=true&requireSSL=true&serverTimezone=UTC&allowPublicKeyRetrieval=true` |
+| `DB_USER` | `um0aytfzzqye8rbg` |
+| `DB_PASS` | `<password de bd2>` |
 | `DB_DRIVER` | `com.mysql.cj.jdbc.Driver` |
 | `DB_DIALECT` | `org.hibernate.dialect.MySQLDialect` |
 | `APP_GATEWAY_URL` | `https://dental-gateway.onrender.com` |
+| `AUTH_SERVICE_URL` | `https://dental-auth-service.onrender.com` |
+| `CLINICAL_SERVICE_URL` | `https://dental-clinical-service.onrender.com` |
 
 ---
 
@@ -142,20 +133,55 @@ En Render, crea 4 **Web Services** apuntando al mismo repositorio de GitHub.
 | **Name** | `dental-clinical-service` |
 | **Root Directory** | `clinical-service` |
 | **Runtime** | `Docker` |
-| **Dockerfile Path** | `Dockerfile.clinical-service` |
+| **Dockerfile Path** | `Dockerfile` |
 
-**Variables de Entorno:** (las mismas que appointment-service, con `SERVER_PORT=8083`)
+**Variables de Entorno:**
+
+| Variable | Valor |
+|----------|-------|
+| `SERVER_PORT` | `8083` |
+| `JWT_SECRET` | `<mismo que auth-service>` |
+| `DB_URL` | `jdbc:mysql://bkoffey2xrpmnnvsgmyk-mysql.services.clever-cloud.com:3306/bkoffey2xrpmnnvsgmyk?useSSL=true&requireSSL=true&serverTimezone=UTC&allowPublicKeyRetrieval=true` |
+| `DB_USER` | `uw2oz4pvq65rubov` |
+| `DB_PASS` | `<password de bd3>` |
+| `DB_DRIVER` | `com.mysql.cj.jdbc.Driver` |
+| `DB_DIALECT` | `org.hibernate.dialect.MySQLDialect` |
+| `APP_GATEWAY_URL` | `https://dental-gateway.onrender.com` |
 
 ---
 
-### Servicio 4: api-gateway
+### Servicio 4: catalog-service
+
+| Configuracion | Valor |
+|---------------|-------|
+| **Name** | `dental-catalog-service` |
+| **Root Directory** | `catalog-service` |
+| **Runtime** | `Docker` |
+| **Dockerfile Path** | `Dockerfile` |
+
+**Variables de Entorno:**
+
+| Variable | Valor |
+|----------|-------|
+| `SERVER_PORT` | `8084` |
+| `JWT_SECRET` | `<mismo que auth-service>` |
+| `DB_URL` | `jdbc:mysql://b0arfjvp1vhkdjcl6bmq-mysql.services.clever-cloud.com:3306/b0arfjvp1vhkdjcl6bmq?useSSL=true&requireSSL=true&serverTimezone=UTC&allowPublicKeyRetrieval=true` |
+| `DB_USER` | `uhxge6yizzgqi8ov` |
+| `DB_PASS` | `<password de bd4>` |
+| `JPA_DDL_AUTO` | `update` |
+| `JPA_SHOW_SQL` | `false` |
+| `APP_GATEWAY_URL` | `https://dental-gateway.onrender.com` |
+
+---
+
+### Servicio 5: api-gateway
 
 | Configuracion | Valor |
 |---------------|-------|
 | **Name** | `dental-gateway` |
 | **Root Directory** | `api-gateway` |
 | **Runtime** | `Docker` |
-| **Dockerfile Path** | `Dockerfile.api-gateway` |
+| **Dockerfile Path** | `Dockerfile` |
 
 **Variables de Entorno:**
 
@@ -165,69 +191,64 @@ En Render, crea 4 **Web Services** apuntando al mismo repositorio de GitHub.
 | `AUTH_SERVICE_URL` | `https://dental-auth-service.onrender.com` |
 | `APPOINTMENT_SERVICE_URL` | `https://dental-appointment-service.onrender.com` |
 | `CLINICAL_SERVICE_URL` | `https://dental-clinical-service.onrender.com` |
+| `CATALOG_SERVICE_URL` | `https://dental-catalog-service.onrender.com` |
 
 ---
 
-## 4. Orden de Despliegue
+## Orden de Despliegue
 
 ```
 1. auth-service         (esperar a que este verde)
-2. appointment-service  (en paralelo con clinical-service)
-3. clinical-service     (en paralelo con appointment-service)
-4. api-gateway          (ultimo, necesita las 3 URLs anteriores)
+2. appointment-service  ┐
+3. clinical-service     ├─ en paralelo
+4. catalog-service      ┘
+5. api-gateway          (ultimo, necesita las 4 URLs del paso anterior)
 ```
 
-Despues de desplegar el gateway, **actualiza `APP_GATEWAY_URL`** en auth-service, appointment-service y clinical-service con la URL del gateway.
+Despues de desplegar el gateway, **actualiza `APP_GATEWAY_URL`** en los 4 servicios backend con `https://dental-gateway.onrender.com`.
 
 ---
 
-## 5. Health Checks
-
-Para evitar que Render marque el servicio como "unhealthy", configura en cada Web Service:
-
-**Settings > Health Check Path**:
+## Health Checks
 
 | Servicio | Health Check Path |
 |----------|-------------------|
 | auth-service | `/web/login` |
 | appointment-service | `/web/appointments` |
 | clinical-service | `/web/clinical` |
+| catalog-service | `/actuator/health` |
 | api-gateway | `/web/login` |
 
 ---
 
-## 6. Mantener Servicios Gratuitos Despiertos
+## Mantener Servicios Gratuitos Despiertos
 
-En el plan Free, Render duerme los servicios tras 15 minutos de inactividad. Usa [cron-job.org](https://cron-job.org) para hacer ping cada 10 minutos:
+En el plan Free, Render duerme los servicios tras 15 min de inactividad. Usa [cron-job.org](https://cron-job.org):
 
-Crea 4 cron jobs:
 ```
-https://dental-gateway.onrender.com      # cada 10 min
-https://dental-auth-service.onrender.com  # cada 10 min
-https://dental-appointment-service.onrender.com  # cada 10 min
-https://dental-clinical-service.onrender.com     # cada 10 min
+https://dental-gateway.onrender.com               cada 10 min
+https://dental-auth-service.onrender.com           cada 10 min
+https://dental-appointment-service.onrender.com    cada 10 min
+https://dental-clinical-service.onrender.com       cada 10 min
+https://dental-catalog-service.onrender.com        cada 10 min
 ```
 
 ---
 
-## 7. Verificacion
-
-Una vez desplegados, prueba el flujo completo:
+## Verificacion
 
 ```bash
-# 1. Login como admin
+# 1. Login
 curl -X POST https://dental-auth-service.onrender.com/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"admin123"}'
-# Deberia devolver un token JWT
 
-# 2. Verificar que el gateway funciona
+# 2. Gateway
 curl -L https://dental-gateway.onrender.com
-# Deberia redirigir a /web/login
 
-# 3. Verificar citas a traves del gateway
-curl https://dental-gateway.onrender.com/web/appointments \
-  -H "Cookie: token=<token_del_login>"
+# 3. Catalogo via Gateway
+curl https://dental-gateway.onrender.com/api/catalog/services/active \
+  -H "Authorization: Bearer <token>"
 ```
 
 ### Credenciales por defecto
@@ -238,71 +259,37 @@ curl https://dental-gateway.onrender.com/web/appointments \
 | `recepcion` | `recepcion123` | RECEPTIONIST |
 | `doctor1` | `doctor123` | DOCTOR |
 
-Estos usuarios se crean automaticamente al iniciar `auth-service` por primera vez.
+Se crean automaticamente al iniciar `auth-service` por primera vez.
 
 ---
 
-## 8. Logs y Debugging
-
-Cada servicio en Render tiene una pestana **Logs** en tiempo real. Los errores comunes:
+## Logs y Debugging
 
 | Error | Causa | Solucion |
 |-------|-------|----------|
-| `Connection refused` | MySQL no accesible | Verifica DB_HOST y que MySQL acepte conexiones externas |
-| `JWT signature does not match` | JWT_SECRET diferente entre servicios | Usa el mismo JWT_SECRET en los 4 servicios |
-| `Table 'xxx' doesn't exist` | `ddl-auto=update` no ejecutado | Verifica que `spring.jpa.hibernate.ddl-auto=update` este en las variables |
-| `404 Not Found` en gateway | Rutas mal configuradas | Revisa `SERVER_PORT` y las URLs en las variables del gateway |
+| `Connection refused` | MySQL no accesible | Verifica DB_URL, DB_USER, DB_PASS |
+| `JWT signature does not match` | JWT_SECRET diferente | Usa el mismo JWT_SECRET en los 5 servicios |
+| `Table 'xxx' doesn't exist` | ddl-auto=update no ejecutado | Verifica `spring.jpa.hibernate.ddl-auto=update` |
+| `404 Not Found` en gateway | Rutas mal configuradas | Revisa las *_SERVICE_URL en el gateway |
 
 ---
 
-## 9. Variables de Entorno - Resumen
-
-### auth-service, appointment-service, clinical-service
-```
-SERVER_PORT=<puerto>
-JWT_SECRET=<misma_clave_en_los_3>
-DB_URL=jdbc:mysql://<host>:<port>/<db>?useSSL=true&serverTimezone=UTC
-DB_USER=<user>
-DB_PASS=<pass>
-DB_DRIVER=com.mysql.cj.jdbc.Driver
-DB_DIALECT=org.hibernate.dialect.MySQLDialect
-APP_GATEWAY_URL=https://dental-gateway.onrender.com
-```
-
-### api-gateway
-```
-SERVER_PORT=8080
-AUTH_SERVICE_URL=https://dental-auth-service.onrender.com
-APPOINTMENT_SERVICE_URL=https://dental-appointment-service.onrender.com
-CLINICAL_SERVICE_URL=https://dental-clinical-service.onrender.com
-```
-
----
-
-## 10. Despliegue Local con Docker Compose
-
-Si prefieres probar localmente con MySQL:
+## Despliegue Local con Docker Compose
 
 ```bash
-# 1. Asegurate de tener Docker instalado
-# 2. Crea un archivo .env en la raiz con:
-
+# Archivo .env en la raiz:
 DB_ROOT_PASS=rootpassword123
 DB_NAME=clinicadental
 JWT_SECRET=ClinicaDentalSaaS2026SecretKeyForJWTTokenGenerationHS256
 
-# 3. Ejecuta:
+# Ejecutar:
 docker-compose up -d
 
-# 4. Accede a:
-#    http://localhost:8080
+# Acceder: http://localhost:8080
 ```
 
-O usando H2 (sin Docker, solo Java 21+):
+O sin Docker (Java 21+):
 
 ```powershell
 .\start-all.ps1
-# Cada servicio se inicia en su propia ventana
-# Logs en .\logs\
-# Gateway en http://localhost:8080
 ```

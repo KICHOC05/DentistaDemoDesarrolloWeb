@@ -59,9 +59,17 @@
 
             <div th:if="${userRoles.contains('ADMIN') or userRoles.contains('RECEPTIONIST') or userRoles.contains('DOCTOR')}" class="card card-info">
                 <a th:href="${gatewayUrl} + '/web/clinical'" class="card-link">
-                    <div class="card-icon">📋</div>
+                    <div class="card-icon">&#x1F4CB;</div>
                     <h3>Expediente Clinico</h3>
                     <p>Historial medico y odontograma</p>
+                </a>
+            </div>
+
+            <div th:if="${userRoles.contains('ADMIN') or userRoles.contains('RECEPTIONIST')}" class="card card-primary">
+                <a th:href="${gatewayUrl} + '/web/catalog/services'" class="card-link">
+                    <div class="card-icon">&#x1F9B7;</div>
+                    <h3>Catalogo de Servicios</h3>
+                    <p>Administrar servicios dentales</p>
                 </a>
             </div>
         </section>

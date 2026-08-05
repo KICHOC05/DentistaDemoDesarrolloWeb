@@ -73,6 +73,25 @@ services:
     networks:
       - dental-net
 
+  catalog-service:
+    build:
+      context: ./catalog-service
+      dockerfile: ../Dockerfile.catalog-service
+    ports:
+      - "8084:8084"
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/${DB_NAME}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      DB_USER: root
+      DB_PASS: ${DB_ROOT_PASS}
+      JWT_SECRET: ${JWT_SECRET}
+      SERVER_PORT: 8084
+      APP_GATEWAY_URL: http://api-gateway:8080
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - dental-net
+
   api-gateway:
     build:
       context: ./api-gateway
@@ -84,10 +103,12 @@ services:
       AUTH_SERVICE_URL: http://auth-service:8081
       APPOINTMENT_SERVICE_URL: http://appointment-service:8082
       CLINICAL_SERVICE_URL: http://clinical-service:8083
+      CATALOG_SERVICE_URL: http://catalog-service:8084
     depends_on:
       - auth-service
       - appointment-service
       - clinical-service
+      - catalog-service
     networks:
       - dental-net
 

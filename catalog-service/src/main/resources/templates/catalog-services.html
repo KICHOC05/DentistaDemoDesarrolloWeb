@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="token" th:content="${token}">
+    <title>DentistaDemo - Catalogo de Servicios</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">DentistaDemo</h1>
+            <p class="subtitle">Catalogo de Servicios Dentales</p>
+            <div class="user-info">
+                <a th:href="${gatewayUrl} + '/web/dashboard'" class="btn btn-sm btn-secondary">Dashboard</a>
+                <a th:href="${gatewayUrl} + '/web/logout'" class="btn btn-sm btn-secondary">Cerrar Sesion</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="page-header">
+            <h2>Servicios Dentales</h2>
+            <div class="header-actions">
+                <a th:href="@{/web/catalog/services/new}" class="btn btn-success"
+                   th:if="${#lists.contains(userRoles, 'ROLE_ADMIN') or #lists.contains(userRoles, 'ROLE_RECEPTIONIST')}">
+                    Nuevo Servicio
+                </a>
+                <a th:href="${gatewayUrl} + '/web/dashboard'" class="btn btn-secondary">Volver al Inicio</a>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(services)}" class="empty-state">
+            <p>No hay servicios dentales registrados.</p>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(services)}" class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Descripcion</th>
+                        <th>Precio</th>
+                        <th>Duracion</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="svc : ${services}" th:id="'row-' + ${svc.publicId}">
+                        <td th:text="${svc.name}">Nombre</td>
+                        <td th:text="${svc.description}">Descripcion</td>
+                        <td th:text="${'$' + svc.price}">$0.00</td>
+                        <td th:text="${svc.durationMinutes} + ' min'">0 min</td>
+                        <td>
+                            <span class="status-badge"
+                                  th:classappend="${svc.active ? 'status-active' : 'status-inactive'}"
+                                  th:text="${svc.active ? 'Activo' : 'Inactivo'}">Estado</span>
+                        </td>
+                        <td class="actions-cell"
+                            th:if="${#lists.contains(userRoles, 'ROLE_ADMIN') or #lists.contains(userRoles, 'ROLE_RECEPTIONIST')}">
+                            <a th:href="@{/web/catalog/services/{id}/edit(id=${svc.publicId})}"
+                               class="btn btn-sm btn-primary">Editar</a>
+                            <a href="javascript:void(0)"
+                               class="btn btn-sm btn-info"
+                               th:attr="onclick='toggleService(\'' + ${svc.publicId} + '\')'"
+                               th:text="${svc.active ? 'Desactivar' : 'Activar'}">Toggle</a>
+                            <a href="javascript:void(0)"
+                               class="btn btn-sm btn-danger"
+                               th:if="${#lists.contains(userRoles, 'ROLE_ADMIN')}"
+                               th:attr="onclick='deleteService(\'' + ${svc.publicId} + '\')'">
+                               Eliminar
+                            </a>
+                        </td>
+                        <td class="actions-cell"
+                            th:unless="${#lists.contains(userRoles, 'ROLE_ADMIN') or #lists.contains(userRoles, 'ROLE_RECEPTIONIST')}">
+                            <span class="no-action">Solo lectura</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 DentistaDemo - ClinicaDentalSaaS</p>
+        </div>
+    </footer>
+
+    <script th:src="@{/js/catalog.js}"></script>
+</body>
+</html>

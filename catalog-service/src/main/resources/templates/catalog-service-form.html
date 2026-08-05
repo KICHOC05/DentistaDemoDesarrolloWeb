@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="token" th:content="${token}">
+    <title>DentistaDemo - Servicio Dental</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">DentistaDemo</h1>
+            <p class="subtitle" th:text="${publicId == null} ? 'Nuevo Servicio Dental' : 'Editar Servicio Dental'">
+                Servicio Dental
+            </p>
+            <div class="user-info">
+                <a th:href="${gatewayUrl} + '/web/dashboard'" class="btn btn-sm btn-secondary">Dashboard</a>
+                <a th:href="${gatewayUrl} + '/web/logout'" class="btn btn-sm btn-secondary">Cerrar Sesion</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div th:if="${error}" class="alert alert-error" th:text="${error}">Error</div>
+
+        <div class="form-card">
+            <form th:action="${publicId != null} ? @{/web/catalog/services/{id}/edit(id=${publicId})} : @{/web/catalog/services}"
+                  th:object="${request}" method="post" class="form">
+
+                <div th:if="${publicId != null && request.name != null}">
+                    <input type="hidden" th:field="*{name}" th:value="${request.name}">
+                </div>
+
+                <div class="form-group">
+                    <label for="name">Nombre del servicio *</label>
+                    <input type="text" id="name" th:field="*{name}" class="form-control"
+                           required placeholder="Ej: Limpieza dental" maxlength="255"
+                           th:readonly="${publicId != null && request.name != null}">
+                    <span th:if="${#fields.hasErrors('name')}" class="form-text"
+                          th:errors="*{name}">Error</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Descripcion</label>
+                    <textarea id="description" th:field="*{description}" class="form-control"
+                              placeholder="Descripcion del servicio (opcional)" rows="3"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="price">Precio (MXN) *</label>
+                        <input type="number" id="price" th:field="*{price}" class="form-control"
+                               required step="0.01" min="0" placeholder="0.00">
+                        <span th:if="${#fields.hasErrors('price')}" class="form-text"
+                              th:errors="*{price}">Error</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="durationMinutes">Duracion (minutos) *</label>
+                        <input type="number" id="durationMinutes" th:field="*{durationMinutes}"
+                               class="form-control" required min="1" placeholder="30">
+                        <span th:if="${#fields.hasErrors('durationMinutes')}" class="form-text"
+                              th:errors="*{durationMinutes}">Error</span>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success"
+                            th:text="${publicId == null} ? 'Crear Servicio' : 'Guardar Cambios'">
+                        Guardar
+                    </button>
+                    <a th:href="@{/web/catalog/services}" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 DentistaDemo - ClinicaDentalSaaS</p>
+        </div>
+    </footer>
+</body>
+</html>

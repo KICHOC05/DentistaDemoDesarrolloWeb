@@ -47,6 +47,7 @@ $Services = @(
     @{ Name = "auth-service";        Port = 8081; Dir = "auth-service";        Desc = "Autenticacion / Usuarios" }
     @{ Name = "appointment-service"; Port = 8082; Dir = "appointment-service"; Desc = "Gestion de Citas" }
     @{ Name = "clinical-service";    Port = 8083; Dir = "clinical-service";    Desc = "Expediente Clinico" }
+    @{ Name = "catalog-service";     Port = 8084; Dir = "catalog-service";     Desc = "Catalogo de Servicios Dentales"; EnvFile = ".env" }
 )
 
 Write-Info ""
@@ -95,9 +96,34 @@ foreach ($svc in $Services) {
     $mvnCmd = "..\mvnw.cmd"
     $mvnArgs = "spring-boot:run"
 
+    # Si el servicio requiere variables de entorno desde .env, crear un batch temporal
+    $batchFile = $null
+    if ($svc.ContainsKey("EnvFile") -and $svc.EnvFile) {
+        $envPath = Join-Path $workDir $svc.EnvFile
+        if (Test-Path $envPath) {
+            $envLines = Get-Content -Path $envPath | Where-Object { $_ -match '^\s*[A-Za-z_]' -and $_ -notmatch '^\s*#' }
+            $batchFile = Join-Path $LogsDir ($svc.Name + ".bat")
+            $batchContent = "@echo off`r`n"
+            foreach ($line in $envLines) {
+                if ($line -match '^\s*([^=]+)=(.*)') {
+                    $batchContent += "set `"$($Matches[1])=$($Matches[2])`"`r`n"
+                }
+            }
+            $batchContent += "`"$mvnCmd`" $mvnArgs`r`n"
+            Set-Content -Path $batchFile -Value $batchContent -Encoding Ascii
+            Write-Info ("  .env cargado: " + $svc.EnvFile)
+        }
+    }
+
+    if ($batchFile) {
+        $runCmd = [char]34 + $batchFile + [char]34
+    } else {
+        $runCmd = [char]34 + $mvnCmd + " " + $mvnArgs + [char]34
+    }
+
     try {
         $proc = Start-Process -FilePath "cmd.exe" `
-            -ArgumentList "/c `"$mvnCmd $mvnArgs`" 2>&1" `
+            -ArgumentList "/c $runCmd 2>&1" `
             -WorkingDirectory $workDir `
             -NoNewWindow `
             -RedirectStandardOutput $logFile `
@@ -217,6 +243,7 @@ if ($readyCount -eq $Services.Length) {
     Write-Info "    Auth Service:  http://localhost:8081"
     Write-Info "    Citas:         http://localhost:8082"
     Write-Info "    Clinica:       http://localhost:8083"
+    Write-Info "    Catalogo:      http://localhost:8084"
     Write-Info "    H2 Console:    http://localhost:8082/h2-console"
     Write-Info ""
     Write-Info "  Credenciales por defecto:"
